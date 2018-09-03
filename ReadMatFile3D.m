@@ -28,8 +28,9 @@ gap = min_idx - 1;
 
 for i = 1:length(mat_glob)
     idx = find(idx_array == i + gap, 1);
-    if isempty(idx)
+    while isempty(idx)
         gap = gap + 1;
+        idx = find(idx_array == i + gap, 1);
     end
     gap_map(i) = gap;
 end
