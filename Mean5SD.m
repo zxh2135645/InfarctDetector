@@ -11,19 +11,21 @@ name_glob = glob(cat(2, base_dir, '/*_*'));
 Names = cell(length(name_glob), 1);
 for i = 1:length(name_glob)
     strings = strsplit(name_glob{i},'\');
-    name = strings(end-1);
-    Names(i) = name;
+    name = strings{end-1};
+    Names{i} = name;
 end
 
+RuleOutLabel = NameRuleOutFunc(Names);
+Names = Names(RuleOutLabel == 0);
+
 for la = 1:length(sequence_label)
-    infarct_size = cell(length(name_glob), 2);
     infarct_perc_struct = struct;
     label = sequence_label{la};
-    infarct_perc_array = zeros(size(name_glob));
-    for i = 1:length(name_glob)
-        strings = strsplit(name_glob{i},'\');
-        name = strings{end-1};
+    infarct_perc_array = zeros(size(Names));
+    for i = 1:length(Names)
+        name = Names{i};
         disp(name)
+        
         mask = [];
         excludeContour = [];
         myoRefCell = [];
@@ -69,13 +71,13 @@ for la = 1:length(sequence_label)
                 end
             end
             %        % Display Images
-%                    figure();
-%                    n = ceil(sqrt(size(mask, 3)));
-%                    for k = 1: size(mask, 3)
-%                        subplot(n,n,k)
-%                        imagesc(compositeIm(:,:,k))
-%                        axis equal
-%                    end
+            %                    figure();
+            %                    n = ceil(sqrt(size(mask, 3)));
+            %                    for k = 1: size(mask, 3)
+            %                        subplot(n,n,k)
+            %                        imagesc(compositeIm(:,:,k))
+            %                        axis equal
+            %                    end
             Outpath = cat(2, base_dir, name, '/', label, '/', 'compositeMat.mat');
             if ~exist(Outpath, 'file')
                 save(Outpath, 'compositeIm');
@@ -107,10 +109,27 @@ for la = 1:length(sequence_label)
                 infarct_ex_masked(:,:,j) = infarct_raw .* (~exIm);
             end
             myo_size = sum(mask(:) > 0);
+            
+            infarct_ex_masked = ImPostProc(infarct_ex_masked);
             infarct_size = sum(infarct_ex_masked(:) > 0);
             infarct_perc = infarct_size / myo_size * 100;
             disp(infarct_perc);
             infarct_perc_array(i) = infarct_perc;
+            
+            infarct_out = cat(2, base_dir, name, '/', label, '/MI/');
+            if ~ exist(infarct_out, 'dir')
+                mkdir(infarct_out);
+            end
+         
+            % Always overwrite
+            infarct_out_path = cat(2, infarct_out, 'MyoInfarct.mat');
+            save(infarct_out_path, 'infarct_ex_masked');
+            
+            % Always overwrite
+            for j = 1:length(interp_idx)
+                infarct_out_path = cat(2, infarct_out, 'MyoInfarct', num2str(j),'.tif');
+                imwrite(infarct_ex_masked(:,:,j), infarct_out_path);
+            end
         end
     end
     if strcmp(label, 'LGE')

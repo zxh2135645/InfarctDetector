@@ -18,7 +18,7 @@ for i = 1:length(mat_glob)
     for ii= 1:length(B)
         if ~isempty(B{ii})
             Num(ii,1)=str2double(B{ii}(end));
-        else
+        else 
             Num(ii,1)=NaN;
         end
     end

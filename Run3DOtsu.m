@@ -5,16 +5,26 @@ sequence_label = {'LGE', 'T1'};
 anatomy_label = {'Heart', 'Myocardium', 'excludeContour'};
 label = char(sequence_label(2));
 anatomy = anatomy_label{2};
-
+base_dir = 'C:/Users/ZhangX1/Documents/MATLAB/masked/';
 name_glob = glob(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/*/'));
 
-infarct_size = cell(length(name_glob), 2);
-lv_size = zeros(length(name_glob), 1);
+Names = cell(length(name_glob), 1);
 for i = 1:length(name_glob)
-   strings = strsplit(name_glob{i},'\'); 
-   name = strings{end-1};
-   disp(name)
-   if length(ls(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy))) > 2
+    strings = strsplit(name_glob{i},'\');
+    name = strings{end-1};
+    Names{i} = name;
+end
+
+RuleOutLabel = NameRuleOutFunc(Names);
+Names = Names(RuleOutLabel == 0);
+infarct_size = cell(length(Names), 2);
+lv_size = zeros(length(Names), 1);
+
+for i = 1:length(Names)
+    name = Names{i};
+    disp(name)
+    
+    if length(ls(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy))) > 2
         [mask, dicom_idx] = ReadMatFile3D(name, label, anatomy);
         load(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy_label{3}, '/', label, '_excludeContour.mat'));
         fname = fieldnames(excludeContour);
@@ -42,23 +52,33 @@ for i = 1:length(name_glob)
                     end
                 end
             end
-            inf_size(j) = sum(seg_Neq(:) == Nvals(j)+1);
-            fprintf('infarct size: %d #ofThresh: %d \n', sum(seg_Neq(:) == Nvals(j)+1), j);
+            infarct_ex_masked = ImPostProc(seg_Neq == Nvals(j)+1);
+            infarct_out = cat(2, base_dir, name, '/', label, '/MI_Otsu/');
+            if ~ exist(infarct_out, 'dir')
+                mkdir(infarct_out);
+            end
+            
+            % Always overwrite
+            infarct_out_path = cat(2, infarct_out, 'MyoInfarct', num2str(j), '.mat');
+            save(infarct_out_path, 'infarct_ex_masked');
+            
+            inf_size(j) = sum(infarct_ex_masked(:));
+            fprintf('infarct size: %d #ofThresh: %d \n', sum(infarct_ex_masked(:)), j);
             
         end
         lv_size(i) = sum(binary_mask(:) == 1);
         infarct_size(i, :) = {name, inf_size};
         
-   else
-       disp('Folder is empty!');
-       infarct_size(i, :) = {name, []};
-   end
+    else
+        disp('Folder is empty!');
+        infarct_size(i, :) = {name, []};
+    end
 end
 
 %% Convert to matrix
 clear infarct_matrix lv
 gap = 0;
-for i = 1: length(name_glob)
+for i = 1: length(Names)
     if ~isempty(infarct_size{i, 2})
         infarct_matrix(:, i-gap) = infarct_size{i, 2};
         lv(i-gap) = lv_size(i);
@@ -74,15 +94,22 @@ infarct_std = std(infarct_matrix, 0, 2);
 inf_fraction = infarct_matrix ./ true_lv;
 inf_fraction_perc = inf_fraction * 100;
 
+NumOfThresh1 = inf_fraction_perc(1, :)';
+NumOfThresh2 = inf_fraction_perc(2, :)';
+NumOfThresh3 = inf_fraction_perc(3, :)';
+NumOfThresh4 = inf_fraction_perc(4, :)';
+T = table(Names, NumOfThresh1, NumOfThresh2, NumOfThresh3, NumOfThresh4);
+out_dir = 'C:/Users/ZhangX1/Documents/MATLAB/masked/';
+writetable(T, cat(2, out_dir, 'Otsu.csv'));
 %% Error bar
-figure();
-errorbar(Nvals,infarct_mean,infarct_std,'-s','MarkerSize',10,...
-    'MarkerEdgeColor','red','MarkerFaceColor','red')
-xlabel('Number of threshold'); ylabel('Infarct Area (cm^2)')
-title('3D Otsu on LGE');
-grid on;
-
-save('T1OtsuMat.mat', 'inf_fraction');
+% figure();
+% errorbar(Nvals,infarct_mean,infarct_std,'-s','MarkerSize',10,...
+%     'MarkerEdgeColor','red','MarkerFaceColor','red')
+% xlabel('Number of threshold'); ylabel('Infarct Area (cm^2)')
+% title('3D Otsu on LGE');
+% grid on;
+% 
+% save('T1OtsuMat.mat', 'inf_fraction');
 
 % %% T1 map
 % sequence_label = {'LGE', 'T1'};
@@ -165,76 +192,86 @@ save('T1OtsuMat.mat', 'inf_fraction');
 % end
 
 %%
-sequence_label = {'LGE', 'T1'};
-anatomy_label = {'Heart', 'Myocardium', 'excludeContour'};
-label = char(sequence_label(2));
-anatomy = anatomy_label{2};
-
-name_glob = glob(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/*/'));
-
-infarct_size = cell(length(name_glob), 2);
-lv_size = zeros(length(name_glob), 1);
-for i = 1:length(name_glob)
-   strings = strsplit(name_glob{i},'\'); 
-   name = strings{end-1};
-   disp(name)
-   if length(ls(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy))) > 2
-        [mask, dicom_idx] = ReadMatFile3D(name, label, anatomy);
-        load(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy_label{3}, '/', label, '_excludeContour.mat'));
-        fname = fieldnames(excludeContour);
-        
-        Nvals = [1 2 3 4];
-        inf_size = zeros(length(Nvals), 1);
-        
-        for j = 1:length(Nvals)
-            if ~ isempty(fname)
-                exctr_idx = excludeContour.(fname{1}){2};
-                for k = 1: length(dicom_idx)
-                    if ~isempty(excludeContour.(fname{1}))
-                        ind = find(dicom_idx(k) == exctr_idx);
-                        if ~isempty(ind)
-                            counterMask = ~ excludeContour.(fname{1}){1}(:,:,ind);
-                            mask(:,:,k) = counterMask .* mask(:,:,k);
-                        end
-                    end
-                end
-            end
-            mask(mask == 0) = NaN;
-            [thresh, metric] = multithresh(mask, Nvals(j) );
-            mask(isnan(mask)) = 0;
-            seg_Neq = imquantize(mask, thresh);
-            
-            binary_mask = mask > 0;
-            seg_Neq = binary_mask .* seg_Neq;
-
-            inf_size(j) = sum(seg_Neq(:) == Nvals(j)+1);
-            fprintf('infarct size: %d #ofThresh: %d \n', sum(seg_Neq(:) == Nvals(j)+1), j);
-            
-        end
-        lv_size(i) = sum(binary_mask(:) == 1);
-        infarct_size(i, :) = {name, inf_size};
-        
-   else
-       disp('Folder is empty!');
-       infarct_size(i, :) = {name, []};
-   end
-end
-
-%% Convert to matrix
-clear infarct_matrix lv
-gap = 0;
-for i = 1: length(name_glob)
-    if ~isempty(infarct_size{i, 2})
-        infarct_matrix(:, i-gap) = infarct_size{i, 2};
-        lv(i-gap) = lv_size(i);
-    else
-        gap = gap + 1;
-    end
-end
-infarct_matrix = infarct_matrix* 1.1875^2 / (10^2);
-true_lv = lv * 1.1875^2 / (10^2);
-infarct_mean = mean(infarct_matrix, 2);
-infarct_std = std(infarct_matrix, 0, 2);
-
-inf_fraction = infarct_matrix ./ true_lv;
-inf_fraction_perc = inf_fraction * 100;
+% sequence_label = {'LGE', 'T1'};
+% anatomy_label = {'Heart', 'Myocardium', 'excludeContour'};
+% label = char(sequence_label(2));
+% anatomy = anatomy_label{2};
+% 
+% name_glob = glob(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/*/'));
+% 
+% infarct_size = cell(length(name_glob), 2);
+% lv_size = zeros(length(name_glob), 1);
+% for i = 1:length(name_glob)
+%    strings = strsplit(name_glob{i},'\'); 
+%    name = strings{end-1};
+%    disp(name)
+%    if length(ls(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy))) > 2
+%         [mask, dicom_idx] = ReadMatFile3D(name, label, anatomy);
+%         load(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', label, '/', anatomy_label{3}, '/', label, '_excludeContour.mat'));
+%         fname = fieldnames(excludeContour);
+%         
+%         Nvals = [1 2 3 4];
+%         inf_size = zeros(length(Nvals), 1);
+%         
+%         for j = 1:length(Nvals)
+%             if ~ isempty(fname)
+%                 exctr_idx = excludeContour.(fname{1}){2};
+%                 for k = 1: length(dicom_idx)
+%                     if ~isempty(excludeContour.(fname{1}))
+%                         ind = find(dicom_idx(k) == exctr_idx);
+%                         if ~isempty(ind)
+%                             counterMask = ~ excludeContour.(fname{1}){1}(:,:,ind);
+%                             mask(:,:,k) = counterMask .* mask(:,:,k);
+%                         end
+%                     end
+%                 end
+%             end
+%             mask(mask == 0) = NaN;
+%             [thresh, metric] = multithresh(mask, Nvals(j) );
+%             mask(isnan(mask)) = 0;
+%             seg_Neq = imquantize(mask, thresh);
+%             
+%             binary_mask = mask > 0;
+%             seg_Neq = binary_mask .* seg_Neq;
+% 
+%             inf_size(j) = sum(seg_Neq(:) == Nvals(j)+1);
+%             fprintf('infarct size: %d #ofThresh: %d \n', sum(seg_Neq(:) == Nvals(j)+1), j);
+%             
+%             infarct_ex_masked = seg_Neq == Nvals(j)+1;
+%             infarct_out = cat(2, base_dir, name, '/', label, '/MI_Otsu/');
+%             if ~ exist(infarct_out, 'dir')
+%                 mkdir(infarct_out);
+%             end
+%             
+%             % Always overwrite
+%             infarct_out_path = cat(2, infarct_out, 'MyoInfarct', num2str(j), '.mat');
+%             save(infarct_out_path, 'infarct_ex_masked');
+%             
+%         end
+%         lv_size(i) = sum(binary_mask(:) == 1);
+%         infarct_size(i, :) = {name, inf_size};
+%         
+%    else
+%        disp('Folder is empty!');
+%        infarct_size(i, :) = {name, []};
+%    end
+% end
+% 
+% %% Convert to matrix
+% clear infarct_matrix lv
+% gap = 0;
+% for i = 1: length(name_glob)
+%     if ~isempty(infarct_size{i, 2})
+%         infarct_matrix(:, i-gap) = infarct_size{i, 2};
+%         lv(i-gap) = lv_size(i);
+%     else
+%         gap = gap + 1;
+%     end
+% end
+% infarct_matrix = infarct_matrix* 1.1875^2 / (10^2);
+% true_lv = lv * 1.1875^2 / (10^2);
+% infarct_mean = mean(infarct_matrix, 2);
+% infarct_std = std(infarct_matrix, 0, 2);
+% 
+% inf_fraction = infarct_matrix ./ true_lv;
+% inf_fraction_perc = inf_fraction * 100;
