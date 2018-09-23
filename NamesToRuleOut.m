@@ -7,7 +7,7 @@ RuleOutLabel = zeros(length(Names), 1);
 
 for i = 1:length(Names)
     switch Names{i}
-        case {'BOO_SEUNG_HYUN', 'LIM_DAE_YUNG', 'KIM_YUNG', 'CHUNG_SAM_YUN'}
+        case {'BOO_SEUNG_HYUN', 'LIM_DAE_YUNG', 'KIM_YUNG', 'CHUNG_SAM_YUN', 'LI_SHU_YONG'}
             disp(Names{i});
             RuleOutLabel(i) = 1;
         otherwise 

@@ -10,11 +10,22 @@ anatomy = anatomys{1};
 
 alg = {'Mean5SD', 'Otsu', 'Kmeans', 'GMM'};
 
+CoordsFileName = [base_dir, label, '_coords.csv'];
+[num,txt,raw] = xlsread(CoordsFileName);
+CoordsNames = txt(2:end,1);
+
 Names = GetSubjectName(base_dir);
 RuleOutLabel = NameRuleOutFunc(Names);
 Names = Names(RuleOutLabel == 0);
 LGE_aha = zeros(length(Names) * 16, 1);
 T1_aha = zeros(length(Names) * 16, length(alg));
+
+Coords_idx = zeros(length(CoordsNames), 1);
+for i = 1:length(CoordsNames)
+    if ~isempty(find(strcmp(CoordsNames{i}, Names), 1))
+        Coords_idx(i) = find(strcmp(CoordsNames{i}, Names));
+    end
+end
 
 for alg_iter = 1:length(alg)
     alg_label = alg{alg_iter};
@@ -40,6 +51,13 @@ for alg_iter = 1:length(alg)
         [T1_Myo3D, T1_dicom_idx] = ReadMatFile3D(name, sequence_label{2}, anatomy);
         sliceLocLGE_contoured = sliceLocLGE(LGE_dicom_idx);
         sliceLocT1_contoured = sliceLocT1(T1_dicom_idx);
+        
+        % Read the reference coordinates
+        x = num(name_idx, 1);
+        y = num(name_idx, 2);
+        x_centroid = num(name_idx, 3);
+        y_centroid = num(name_idx, 4);
+        BaseGroove = atan2(x - x_centroid, y - y_centroid) * 180 / pi;
         
         clear LGE_idx_mapped T1_idx_mapped
         for i = 1:length(sliceLocT1_contoured)
@@ -74,10 +92,12 @@ for alg_iter = 1:length(alg)
             if i == 1 || i == 2
                 LocPixCount = zeros(6, 1);
                 SegTotalPixCount = zeros(6, 1);
-                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), LGE_MyoMask(:,:,aha_slice(i)),6,0);
+                Groove = BaseGroove + 60;
+                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), LGE_MyoMask(:,:,aha_slice(i)),6, Groove);
             elseif i == 3
                 LocPixCount = zeros(4, 1);
                 SegTotalPixCount = zeros(4, 1);
+                Groove = BaseGroove + 75;
                 [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), LGE_MyoMask(:,:,aha_slice(i)),4,-45);
             end
             
