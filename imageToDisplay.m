@@ -1,10 +1,11 @@
 clear all;
 close all;
-
+%%
 %name = 'OH_SANG_MOO';
-%name = 'CHOI_DAE_SUK';
-name = 'HAN_BONG_SANG';
+% name = 'CHOI_DAE_SUK';
+%name = 'HAN_BONG_SANG';
 % name = 'HWANG_IN_YONG';
+name = 'KIM_KEUM_HUN';
 base_dir = 'C:\Users\ZhangX1\Documents\MATLAB\masked\';
 addpath('C:\Users\ZhangX1\Documents\MATLAB\cviParser\');
 sequence_label = {'LGE', 'T1'};
@@ -39,11 +40,11 @@ for i = 1:length(dicom_idx)
   axis off
 end
 %%
-figure();
-imagesc(volume_image(:,:,dicom_idx(4)));
-colormap gray;
-axis equal;
-axis off;
+% figure();
+% imagesc(volume_image(:,:,dicom_idx(4)));
+% colormap gray;
+% axis equal;
+% axis off;
 
 %%
 load(cat(2, base_dir, name, '/', sequence_label{2}, '/MI/MyoInfarct.mat'))
@@ -56,8 +57,9 @@ for i = 1:length(dicom_idx)
   C = imfuse(infarct_ex_masked(:,:,i), volume_image(:,:,dicom_idx(i)), 'blend');
   figure();
   imagesc(C)
-  %colormap gray
+  colormap gray
   axis equal
+  axis off
 end
 
 %%
@@ -126,7 +128,9 @@ end
 
 
 %% Bullseye
-name = 'OH_SANG_MOO';
+% name = 'OH_SANG_MOO';
+name = 'CHOI_DAE_SUK';
+% name = 'KIM_KEUM_HUN';
  GetAHABullsEye(name);
 for alg_idx = 1:length(alg)
     alg_label = alg{alg_idx};

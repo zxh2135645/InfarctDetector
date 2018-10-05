@@ -4,15 +4,22 @@ close all;
 base_dir = 'C:\Users\ZhangX1\Documents\MATLAB\masked\';
 addpath('C:\Users\ZhangX1\Documents\MATLAB\cviParser\');
 sequence_label = {'LGE', 'T1'};
-label = sequence_label{1};
 anatomys = {'Heart', 'Myocardium', 'excludeContour', 'MyoReference', 'MI'};
-anatomy = anatomys{1};
+anatomy = anatomys{2};
 
 alg = {'Mean5SD', 'Otsu', 'Kmeans', 'GMM'};
 
-CoordsFileName = [base_dir, label, '_coords.csv'];
-[num,txt,raw] = xlsread(CoordsFileName);
-CoordsNames = txt(2:end,1);
+CoordsFileName_LGE = [base_dir, sequence_label{1}, '_coords.csv'];
+[num_lge,txt,raw_lge] = xlsread(CoordsFileName_LGE);
+CoordsNames_LGE = txt(2:end,1);
+
+CoordsFileName_T1 = [base_dir, sequence_label{2}, '_coords.csv'];
+[num_t1,txt,raw_t1] = xlsread(CoordsFileName_T1);
+CoordsNames_T1 = txt(2:end,1);
+
+if length(CoordsNames_LGE) ~= length(CoordsNames_T1)
+    error('Number of LGE and T1 coords are different, please check!');
+end
 
 Names = GetSubjectName(base_dir);
 RuleOutLabel = NameRuleOutFunc(Names);
@@ -20,10 +27,10 @@ Names = Names(RuleOutLabel == 0);
 LGE_aha = zeros(length(Names) * 16, 1);
 T1_aha = zeros(length(Names) * 16, length(alg));
 
-Coords_idx = zeros(length(CoordsNames), 1);
-for i = 1:length(CoordsNames)
-    if ~isempty(find(strcmp(CoordsNames{i}, Names), 1))
-        Coords_idx(i) = find(strcmp(CoordsNames{i}, Names));
+Coords_idx = zeros(length(CoordsNames_LGE), 1);
+for i = 1:length(CoordsNames_LGE)
+    if ~isempty(find(strcmp(CoordsNames_LGE{i}, Names), 1))
+        Coords_idx(i) = find(strcmp(CoordsNames_LGE{i}, Names));
     end
 end
 
@@ -40,30 +47,41 @@ for alg_iter = 1:length(alg)
     
     for name_idx = 1:length(Names)
         name = Names{name_idx};
-        LGE_MI_Path = cat(2, base_dir, name, '\', label, '\MI\MyoInfarct.mat');
+        LGE_MI_Path = cat(2, base_dir, name, '\', sequence_label{1}, '\MI\MyoInfarct.mat');
         load(LGE_MI_Path);
         
         load(cat(2, base_dir, 'SliceLocDetailLGE.mat'));
         load(cat(2, base_dir, 'SliceLocDetailT1.mat'));
         sliceLocLGE = SliceLocDetailLGE.(name);
         sliceLocT1 = SliceLocDetailT1.(name);
+        
         [LGE_Myo3D, LGE_dicom_idx] = ReadMatFile3D(name, sequence_label{1}, anatomy);
         [T1_Myo3D, T1_dicom_idx] = ReadMatFile3D(name, sequence_label{2}, anatomy);
+        
+        LGE_original_idx = 1:1:length(sliceLocLGE);
+        T1_original_idx = 1:1:length(sliceLocT1);
         sliceLocLGE_contoured = sliceLocLGE(LGE_dicom_idx);
         sliceLocT1_contoured = sliceLocT1(T1_dicom_idx);
         
+                
+        if min(abs(sliceLocLGE_contoured)) == abs(sliceLocLGE_contoured(end))
+            LGE_Myo3D = LGE_Myo3D(:,:,end:-1:1);
+            infarct_ex_masked = infarct_ex_masked(:,:,end:-1:1);
+        end
+        
         % Read the reference coordinates
-        x = num(name_idx, 1);
-        y = num(name_idx, 2);
-        x_centroid = num(name_idx, 3);
-        y_centroid = num(name_idx, 4);
+        refP_idx = find(name_idx == Coords_idx);
+        x = num_lge(refP_idx, 1);
+        y = num_lge(refP_idx, 2);
+        x_centroid = num_lge(refP_idx, 3);
+        y_centroid = num_lge(refP_idx, 4);
         BaseGroove = atan2(x - x_centroid, y - y_centroid) * 180 / pi;
         
         clear LGE_idx_mapped T1_idx_mapped
         for i = 1:length(sliceLocT1_contoured)
             idx = find(abs(sliceLocT1_contoured(i) - sliceLocLGE_contoured) <= 4); % Slice Thickness is 8mm
             if ~isempty(idx)
-                LGE_idx_mapped(i) = min(idx);
+                LGE_idx_mapped(i) = LGE_dicom_idx(min(idx));
                 T1_idx_mapped(i) = T1_dicom_idx(i);
             end
         end
@@ -74,15 +92,29 @@ for alg_iter = 1:length(alg)
         if length(LGE_idx_mapped) == length(T1_idx_mapped)
             n = length(LGE_idx_mapped);
             mode = mod(n,3);
-            switch mode
-                case {0, 1}
-                    integ = fix(n/3);
-                    aha_slice = [2; 2+integ; 2+integ*2];
-                case {2}
-                    integ = fix(n/3) + 1;
-                    aha_slice = [1; 1+integ; 1+integ*2];
+            if n > 3
+                switch mode
+                    case {0, 1}
+                        integ = fix(n/3);
+                        aha_slice = [2; 2+integ; 2+integ*2];
+                    case {2}
+                        integ = fix(n/3) + 1;
+                        aha_slice = [1; 1+integ; 1+integ*2];
+                end
+            elseif n ==3
+                aha_slice = [1 2 3];
+            else
+                error("Available slice numbers are smaller than 3.");
             end
         end
+        
+        LGE_aha_seg_slice = zeros(length(aha_slice), 1);
+        T1_aha_seg_slice = zeros(length(aha_slice), 1);
+        for i = 1:length(aha_slice)
+            LGE_aha_seg_slice(i) = find(LGE_dicom_idx == LGE_idx_mapped(aha_slice(i)));
+            T1_aha_seg_slice(i) = find(T1_dicom_idx == T1_idx_mapped(aha_slice(i)));
+        end
+        
         
         LGE_MyoMask = LGE_Myo3D > 0;
         LGE_SegPixCount = cell(3, 1);
@@ -93,12 +125,12 @@ for alg_iter = 1:length(alg)
                 LocPixCount = zeros(6, 1);
                 SegTotalPixCount = zeros(6, 1);
                 Groove = BaseGroove + 60;
-                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), LGE_MyoMask(:,:,aha_slice(i)),6, Groove);
+                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,LGE_aha_seg_slice(i)), LGE_MyoMask(:,:,LGE_aha_seg_slice(i)),6, Groove);
             elseif i == 3
                 LocPixCount = zeros(4, 1);
                 SegTotalPixCount = zeros(4, 1);
                 Groove = BaseGroove + 75;
-                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), LGE_MyoMask(:,:,aha_slice(i)),4,-45);
+                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,LGE_aha_seg_slice(i)), LGE_MyoMask(:,:,LGE_aha_seg_slice(i)),4, Groove);
             end
             
             for j = 1:length(Segmentpix)
@@ -109,25 +141,40 @@ for alg_iter = 1:length(alg)
             LGE_SegTotalPixCount{i} = SegTotalPixCount;
         end
         
-        T1_MyoMask = T1_Myo3D > 0;
-        T1_SegPixCount = cell(3, 1);
-        T1_SegTotalPixCount = cell(3, 1);
-        
         if strcmp(alg_label, 'Mean5SD')
             T1_MI_Path = cat(2, base_dir, name, '\', sequence_label{2}, '\MI\MyoInfarct.mat');
         else
             T1_MI_Path = cat(2, base_dir, name, '\', sequence_label{2}, '\MI_', alg_label, '\MyoInfarct', num2str(Index(name_idx)), '.mat');
         end
         load(T1_MI_Path);
+        
+        if min(abs(sliceLocT1_contoured)) == abs(sliceLocT1_contoured(end))
+            T1_Myo3D = T1_Myo3D(:,:,end:-1:1);
+            infarct_ex_masked = infarct_ex_masked(:,:,end:-1:1);
+        end
+        
+        T1_MyoMask = T1_Myo3D > 0;
+        T1_SegPixCount = cell(3, 1);
+        T1_SegTotalPixCount = cell(3, 1);
+             
+        % Read the reference coordinates
+        x = num_t1(refP_idx, 1);
+        y = num_t1(refP_idx, 2);
+        x_centroid = num_t1(refP_idx, 3);
+        y_centroid = num_t1(refP_idx, 4);
+        BaseGroove = atan2(x - x_centroid, y - y_centroid) * 180 / pi;
+        
         for i = 1:length(aha_slice)
             if i == 1 || i == 2
                 LocPixCount = zeros(6, 1);
                 SegTotalPixCount = zeros(6, 1);
-                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), T1_MyoMask(:,:,aha_slice(i)),6,0);
+                Groove = BaseGroove + 60;
+                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,T1_aha_seg_slice(i)), T1_MyoMask(:,:,T1_aha_seg_slice(i)),6,Groove);
             elseif i == 3
                 LocPixCount = zeros(4, 1);
                 SegTotalPixCount = zeros(4, 1);
-                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,aha_slice(i)), T1_MyoMask(:,:,aha_slice(i)),4,-45);
+                Groove = BaseGroove + 75;
+                [Segmentpix, stats] = AHASegmentation(infarct_ex_masked(:,:,T1_aha_seg_slice(i)), T1_MyoMask(:,:,T1_aha_seg_slice(i)),4,Groove);
             end
             
             for j = 1:length(Segmentpix)
