@@ -2,6 +2,8 @@
 clear all;
 close all;
 
+addpath('C:\Users\ZhangX1\Documents\MATLAB\cviParser\');
+
 sequence_label = {'LGE', 'T1'};
 anatomy_label = {'Heart', 'Myocardium', 'excludeContour', 'MyoReference'};
 anatomy = anatomy_label{2};

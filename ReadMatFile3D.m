@@ -1,9 +1,13 @@
-function [mask, dicom_idx] = ReadMatFile3D(name, modality, anatomy)
+function [mask, dicom_idx] = ReadMatFile3D(name, modality, anatomy, base_dir)
+
+if nargin == 3
+    base_dir = 'C:/Users/ZhangX1/Documents/MATLAB/masked/';
+end
 
 % Too include glob function
 addpath('C:/Users/ZhangX1/Documents/MATLAB/cviParser/');
 
-mat_glob = glob(cat(2, 'C:/Users/ZhangX1/Documents/MATLAB/masked/', name, '/', modality, '/', anatomy, '/masked_*.mat'));
+mat_glob = glob(cat(2, base_dir, name, '/', modality, '/', anatomy, '/masked_*.mat'));
 
 % Reordering
 idx_array = zeros(length(mat_glob), 1);
