@@ -1,3 +1,4 @@
+%% Initially intended for slice-by-slice groove pickup, but is not implemented
 clear all;
 close all;
 

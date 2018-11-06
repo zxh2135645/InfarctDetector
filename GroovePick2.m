@@ -1,3 +1,6 @@
+%%
+% Picking up grooves slice per slice 
+% This is not implemented in the current version
 clear all;
 close all;
 

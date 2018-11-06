@@ -1,6 +1,7 @@
 clear all;
 close all;
 
+% Partition into 3 groups, to calculate 3 AHA different volumes.
 base_dir = 'C:\Users\ZhangX1\Documents\MATLAB\masked\';
 addpath('C:\Users\ZhangX1\Documents\MATLAB\cviParser\');
 sequence_label = {'LGE', 'T1'};
@@ -9,11 +10,11 @@ anatomy = anatomys{2};
 
 alg = {'Mean5SD', 'Otsu', 'Kmeans', 'GMM'};
 
-CoordsFileName_LGE = [base_dir, sequence_label{1}, '_coords.csv'];
+CoordsFileName_LGE = [base_dir, sequence_label{1}, 'coords.csv'];
 [num_lge,txt,raw_lge] = xlsread(CoordsFileName_LGE);
 CoordsNames_LGE = txt(2:end,1);
 
-CoordsFileName_T1 = [base_dir, sequence_label{2}, '_coords.csv'];
+CoordsFileName_T1 = [base_dir, sequence_label{2}, 'coords.csv'];
 [num_t1,txt,raw_t1] = xlsread(CoordsFileName_T1);
 CoordsNames_T1 = txt(2:end,1);
 

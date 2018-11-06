@@ -13,7 +13,7 @@ x = zeros(length(Names), p); % Rows
 y = zeros(length(Names), p); % Columns
 x_centroid = zeros(length(Names), 1);
 y_centroid = zeros(length(Names), 1);
-outputFileName = [out_dir, label, '_coords.csv'];
+outputFileName = [out_dir, label, 'coords.csv'];
 
 if ~(exist(outputFileName, 'file') && overwrite_label == 0)
     for n = 1:length(Names)

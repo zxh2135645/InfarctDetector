@@ -1,3 +1,4 @@
+%% This was not used anymore
 clear all;
 close all;
 

@@ -14,7 +14,7 @@ y = cell(length(Names), 1); % Columns
 x_centroid = cell(length(Names), 1);
 y_centroid = cell(length(Names), 1);
 coords = struct;
-outputFileName = [out_dir, label, '_coords2.mat'];
+outputFileName = [out_dir, label, 'coords2.mat'];
 
 if ~(exist(outputFileName, 'file') && overwrite_label == 0)
     for n = 1:length(Names)

@@ -2,10 +2,10 @@ clear all;
 close all;
 %%
 %name = 'OH_SANG_MOO';
-% name = 'CHOI_DAE_SUK';
+%name = 'CHOI_DAE_SUK';
 %name = 'HAN_BONG_SANG';
 % name = 'HWANG_IN_YONG';
-name = 'KIM_KEUM_HUN';
+% name = 'KIM_KEUM_HUN';
 base_dir = 'C:\Users\ZhangX1\Documents\MATLAB\masked\';
 addpath('C:\Users\ZhangX1\Documents\MATLAB\cviParser\');
 sequence_label = {'LGE', 'T1'};
@@ -128,8 +128,10 @@ end
 
 
 %% Bullseye
+alg = {'Mean5SD', 'Otsu', 'Kmeans', 'GMM'};
 % name = 'OH_SANG_MOO';
-name = 'CHOI_DAE_SUK';
+% name = 'CHOI_DAE_SUK';
+name = 'HAN_BONG_SANG';
 % name = 'KIM_KEUM_HUN';
  GetAHABullsEye(name);
 for alg_idx = 1:length(alg)

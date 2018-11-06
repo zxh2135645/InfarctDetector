@@ -1,3 +1,6 @@
+%% This version is initially used but now aborted
+% Prefered to use the segment16_volume_algorithm.m to volume-by-volume
+% segment
 clear all;
 close all;
 

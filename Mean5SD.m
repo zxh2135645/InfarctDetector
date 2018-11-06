@@ -1,4 +1,5 @@
 %% To get Mean + 5SD as ground truth 
+% This version is for clustering methods
 clear all;
 close all;
 

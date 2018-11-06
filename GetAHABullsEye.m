@@ -44,6 +44,7 @@ clr.Color = [1 1 1];
 clr.TickLabels = {'0%', '100%'};
 clr.Ticks = [0, 100];
 clr.Limits = [0, 100];
+set(gca, 'FontSize', 16)
 
 color_spec = zeros(16, 3);
 for i = 1:16
@@ -54,21 +55,21 @@ for i = 1:16
    end
 end
 
-h1 = text(0, 3.5, num2str(round(segPerc(6))), 'HorizontalAlignment', 'center', 'Color', color_spec(6,:), 'FontSize', 12);
-h7 = text(0, 2.5, num2str(round(segPerc(12))), 'HorizontalAlignment', 'center', 'Color', color_spec(12,:), 'FontSize', 12);
-h13 = text(0, 1.5, num2str(round(segPerc(16))), 'HorizontalAlignment', 'center', 'Color', color_spec(16,:), 'FontSize', 12);
-h15 = text(0, -1.5, num2str(round(segPerc(14))), 'HorizontalAlignment', 'center', 'Color', color_spec(14,:), 'FontSize', 12);
-h10 = text(0, -2.5, num2str(round(segPerc(9))), 'HorizontalAlignment', 'center', 'Color', color_spec(9,:), 'FontSize', 12);
-h4 = text(0, -3.5, num2str(round(segPerc(3))), 'HorizontalAlignment', 'center', 'Color', color_spec(3,:), 'FontSize', 12);
-h16 = text(1.5, 0, num2str(round(segPerc(13))), 'HorizontalAlignment', 'center', 'Color', color_spec(13,:), 'FontSize', 12);
-h14 = text(-1.5, 0, num2str(round(segPerc(15))), 'HorizontalAlignment', 'center', 'Color', color_spec(15,:), 'FontSize', 12);
-h12 = text(2.1, 1.4, num2str(round(segPerc(7))), 'HorizontalAlignment', 'center', 'Color', color_spec(7,:), 'FontSize', 12);
-h6 = text(2.9, 2.0, num2str(round(segPerc(1))), 'HorizontalAlignment', 'center', 'Color', color_spec(1,:), 'FontSize', 12);
-h8 = text(-2.1, 1.4, num2str(round(segPerc(11))), 'HorizontalAlignment', 'center', 'Color', color_spec(11,:), 'FontSize', 12);
-h2 = text(-2.9, 2.0, num2str(round(segPerc(5))), 'HorizontalAlignment', 'center', 'Color', color_spec(5,:), 'FontSize', 12);
-h11 = text(2.1, -1.4, num2str(round(segPerc(8))), 'HorizontalAlignment', 'center', 'Color', color_spec(8,:), 'FontSize', 12);
-h5 = text(2.9, -2.0, num2str(round(segPerc(2))), 'HorizontalAlignment', 'center', 'Color', color_spec(2,:), 'FontSize', 12);
-h9 = text(-2.1, -1.4, num2str(round(segPerc(10))), 'HorizontalAlignment', 'center', 'Color', color_spec(10,:), 'FontSize', 12);
-h3 = text(-2.9, -2.0, num2str(round(segPerc(4))), 'HorizontalAlignment', 'center', 'Color', color_spec(4,:), 'FontSize', 12);
+h1 = text(0, 3.5, num2str(round(segPerc(6))), 'HorizontalAlignment', 'center', 'Color', color_spec(6,:), 'FontSize', 20);
+h7 = text(0, 2.5, num2str(round(segPerc(12))), 'HorizontalAlignment', 'center', 'Color', color_spec(12,:), 'FontSize', 20);
+h13 = text(0, 1.5, num2str(round(segPerc(16))), 'HorizontalAlignment', 'center', 'Color', color_spec(16,:), 'FontSize', 20);
+h15 = text(0, -1.5, num2str(round(segPerc(14))), 'HorizontalAlignment', 'center', 'Color', color_spec(14,:), 'FontSize', 20);
+h10 = text(0, -2.5, num2str(round(segPerc(9))), 'HorizontalAlignment', 'center', 'Color', color_spec(9,:), 'FontSize', 20);
+h4 = text(0, -3.5, num2str(round(segPerc(3))), 'HorizontalAlignment', 'center', 'Color', color_spec(3,:), 'FontSize', 20);
+h16 = text(1.5, 0, num2str(round(segPerc(13))), 'HorizontalAlignment', 'center', 'Color', color_spec(13,:), 'FontSize', 20);
+h14 = text(-1.5, 0, num2str(round(segPerc(15))), 'HorizontalAlignment', 'center', 'Color', color_spec(15,:), 'FontSize', 20);
+h12 = text(2.1, 1.4, num2str(round(segPerc(7))), 'HorizontalAlignment', 'center', 'Color', color_spec(7,:), 'FontSize', 20);
+h6 = text(2.9, 2.0, num2str(round(segPerc(1))), 'HorizontalAlignment', 'center', 'Color', color_spec(1,:), 'FontSize', 20);
+h8 = text(-2.1, 1.4, num2str(round(segPerc(11))), 'HorizontalAlignment', 'center', 'Color', color_spec(11,:), 'FontSize', 20);
+h2 = text(-2.9, 2.0, num2str(round(segPerc(5))), 'HorizontalAlignment', 'center', 'Color', color_spec(5,:), 'FontSize', 20);
+h11 = text(2.1, -1.4, num2str(round(segPerc(8))), 'HorizontalAlignment', 'center', 'Color', color_spec(8,:), 'FontSize', 20);
+h5 = text(2.9, -2.0, num2str(round(segPerc(2))), 'HorizontalAlignment', 'center', 'Color', color_spec(2,:), 'FontSize', 20);
+h9 = text(-2.1, -1.4, num2str(round(segPerc(10))), 'HorizontalAlignment', 'center', 'Color', color_spec(10,:), 'FontSize', 20);
+h3 = text(-2.9, -2.0, num2str(round(segPerc(4))), 'HorizontalAlignment', 'center', 'Color', color_spec(4,:), 'FontSize', 20);
 %set(h,'Rotation',90);
 end
